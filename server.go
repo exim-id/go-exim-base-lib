@@ -13,7 +13,7 @@ func ServerStart(endpoints func(*echo.Echo)) {
 	defer errors.ServerStop(e)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: "[${time}] method=${method}, uri=${uri}, status=${status}\n"}))
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}}))
+	e.Use(middleware.CORS())
 	e.HTTPErrorHandler = mdw.CustomHTTPErrorHandler
 	endpoints(e)
 	e.Logger.Fatal(e.Start(env.GetServerPort()))

@@ -13,6 +13,11 @@ func Init() {
 	}
 }
 
+func GetJwtSecret() string {
+	defer errors.NormalError()
+	return os.Getenv("JWT_SECRET")
+}
+
 func GetGrpcPort() string {
 	defer errors.NormalError()
 	return os.Getenv("GRPC_PORT")

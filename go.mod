@@ -3,14 +3,16 @@ module github.com/exim-id/go-exim-base-lib
 go 1.18
 
 require (
-	github.com/AchmadRifai/array-utils v0.0.0-20231204104903-12c62f3185a9 // indirect
+	github.com/AchmadRifai/array-utils v1.0.1 // indirect
 	github.com/AchmadRifai/go-ampq-consumer v1.1.2 // indirect
 	github.com/AchmadRifai/maps-utils v1.0.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/labstack/echo/v4 v4.11.4 // indirect

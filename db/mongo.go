@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"runtime/debug"
@@ -108,6 +109,30 @@ func mongoDbPage[T interface{}, W interface{}](coll *mongo.Collection, req dto.P
 
 func MongoDbFindAllCollection[T interface{}, W interface{}](filter W, doing func(*mongo.Database) *mongo.Collection) []T {
 	return OnMongoConnection[[]T](func(d *mongo.Database) []T { return MongoDbFindAllFromCollection[T](doing(d), filter) })
+}
+
+func MongoDbFind[T, W interface{}](filter W, doing func(*mongo.Database) *mongo.Collection) T {
+	return OnMongoConnection[T](func(d *mongo.Database) T {
+		result, exists := MongoDbFindFromCollection[T, W](filter, doing(d))
+		if !exists {
+			panic(fmt.Errorf("Result with %v is empty", filter))
+		}
+		return result
+	})
+}
+
+func MongoDbFindFromCollection[T, W interface{}](filter W, coll *mongo.Collection) (T, bool) {
+	var result T
+	exists := false
+	if err := coll.FindOne(context.Background(), filter).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return result, false
+		} else {
+			panic(err)
+		}
+	}
+	exists = true
+	return result, exists
 }
 
 func MongoDbFindAllFromCollection[T interface{}, W interface{}](coll *mongo.Collection, filter W) []T {
