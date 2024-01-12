@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/leekchan/accounting"
 )
 
 type Money struct {
 	Amount   float64 `bson:"amount"`
 	Currency string  `bson:"currency;omitempty"`
+}
+
+func (m *Money) Format() string {
+	lc := accounting.LocaleInfo[m.Currency]
+	ac := accounting.Accounting{Symbol: lc.ComSymbol, Thousand: lc.ThouSep, Decimal: lc.DecSep}
+	return ac.FormatMoney(m.Amount)
 }
 
 func (m *Money) Round() Money {

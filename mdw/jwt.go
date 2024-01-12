@@ -19,31 +19,59 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func GenerateToken() {
-
+func RefreshToken(tokenStr string) (string, error) {
+	claims, err := ParseToken(tokenStr)
+	if err != nil {
+		return "", err
+	}
+	return GenerateToken(claims)
 }
 
-func GenerateEmptyToken() (string, time.Time, error) {
+func ParseToken(tokenStr string) (Claims, error) {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		if method, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("Invalid token")
+		} else if method != jwt.SigningMethodRS512 {
+			return nil, fmt.Errorf("Method not equals")
+		}
+		return []byte(env.GetJwtSecret()), nil
+	})
+	if err != nil {
+		return Claims{}, err
+	}
+	claims, ok := token.Claims.(Claims)
+	if !ok || !token.Valid {
+		return Claims{}, fmt.Errorf("Invalid token")
+	}
+	return claims, err
+}
+
+func GenerateEmptyToken() (string, error) {
 	exp := time.Now().Add(time.Minute * 30)
 	claims := &Claims{StandardClaims: jwt.StandardClaims{ExpiresAt: exp.Unix()}}
+	return GenerateToken(*claims)
+}
+
+func GenerateToken(claims Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	tokenString, err := token.SignedString([]byte(env.GetJwtSecret()))
 	if err == nil {
 		SaveToken(token)
 	}
-	return tokenString, exp, err
+	return tokenString, err
 }
 
-func SaveToken(token *jwt.Token) {
-	db.NewMongoTransaction[bool](true).Transaction(func(d *mongo.Database) bool {
+func SaveToken(token *jwt.Token) error {
+	return db.NewMongoTransaction[error](true).Transaction(func(d *mongo.Database) error {
 		claims := token.Claims.(*Claims)
 		if err := claims.Valid(); err != nil {
-			panic(err)
+			return err
 		}
 		coll := d.Collection("sessions")
 		session, exists := db.MongoDbFindFromCollection[models.Session](models.Session{Jti: claims.Id}, coll)
 		if !exists {
-			_, err := coll.InsertOne(context.Background(), models.Session{
+			ctx, _ := context.WithTimeout(context.Background(), time.Minute*30)
+			_, err := coll.InsertOne(ctx, models.Session{
 				Jti:         claims.Id,
 				Mode:        "anonym",
 				CreatedDate: time.Now(),
@@ -54,7 +82,7 @@ func SaveToken(token *jwt.Token) {
 		} else {
 			panic(fmt.Errorf("Session %s is exists", session.Id))
 		}
-		return false
+		return nil
 	})
 }
 
